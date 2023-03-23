@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 BfaCore Reforged
+ * Copyright (C) 2022 BfaCore Reforged
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1759,8 +1759,25 @@ class TC_GAME_API Unit : public WorldObject
         float m_modAttackSpeedPct[MAX_ATTACK];
         uint32 m_attackTimer[MAX_ATTACK];
 
+         //AddDelayedEvent
+        void UpdateDelayedEventOperations(uint32 const diff);
+
+        /// Add timed delayed operation
+        /// @p_Timeout  : Delay time
+        /// @p_Function : Callback function
+        void AddDelayedEvent(uint32 timeout, std::function<void()>&& function)
+        {
+            emptyWarned = false;
+            timedDelayedOperations.emplace_back(std::pair<uint32, std::function<void()>>(timeout, function));
+        }
+
+        std::vector<std::pair<int32, std::function<void()>>>    timedDelayedOperations;   ///< Delayed operations
+        bool                                                    emptyWarned;              ///< Warning when there are no more delayed operations
+        //AddDelayedEvent
+
         // Event handler
         EventProcessor m_Events;
+
 
         // stat system
         bool HandleStatModifier(UnitMods unitMod, UnitModifierType modifierType, float amount, bool apply);
@@ -2134,6 +2151,12 @@ class TC_GAME_API Unit : public WorldObject
             UF::UnitData::Mask const& requestedUnitMask, Player const* target) const;
         void DestroyForPlayer(Player* target) const override;
 
+        // Used to control the movement, if is true the npc can move, if is false the npc can't move.
+        // You can use this method in any moment and the creature can enter/out of combat in this state, keep attacking or casting spells.
+        // The timer is for clear in the time especificated the state added.
+        // The timer must be in ms.
+        void SetInMovement(bool toSet = true, uint32 timer = 0);
+		
  protected:
         void ClearUpdateMask(bool remove) override;
 
@@ -2371,5 +2394,4 @@ inline void SetUnitCurrentCastSpell(Unit* unit, Spell* spell)
 {
     unit->SetCurrentCastSpell(spell);
 }
-
 #endif
